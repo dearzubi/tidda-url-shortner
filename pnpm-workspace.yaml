@@ -1,0 +1,26 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# Required for `pnpm deploy` (used by the backend Dockerfile). Hard-copies
+# workspace deps into consumers instead of symlinking. Becomes the default
+# in a future pnpm major.
+injectWorkspacePackages: true
+
+overrides:
+  'fastify@>=5.3.2 <=5.8.4': 5.8.5
+
+# pnpm 11 blocks postinstall scripts by default. Allowed packages must be
+# listed here. Only add packages whose build scripts are necessary and trusted.
+allowBuilds:
+  '@nestjs/core': true
+  '@swc/core': true
+  cpu-features: true
+  esbuild: true
+  lefthook: true
+  msw: true
+  protobufjs: true
+  ssh2: true
+
+minimumReleaseAgeExclude:
+  - fastify@5.8.5

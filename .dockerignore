@@ -1,0 +1,30 @@
+# Keep Docker build contexts small and prevent local-only files from reaching
+# the Docker daemon. Build stages explicitly copy the files they need.
+
+.git
+.github
+.cache
+.claude
+.codex
+.DS_Store
+
+node_modules
+**/node_modules
+.pnpm-store
+
+dist
+build
+coverage
+.vite
+*.tsbuildinfo
+
+# Never send local secrets or machine-specific overrides to Docker.
+/.env
+.env.local
+.env.*.local
+**/.env.local
+**/.env.*.local
+
+*.log
+npm-debug.log*
+pnpm-debug.log*

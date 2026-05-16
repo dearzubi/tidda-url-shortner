@@ -1,0 +1,108 @@
+x-loki-logging: &loki-logging
+  driver: loki
+  options:
+    loki-url: "http://127.0.0.1:${LOKI_PORT}/loki/api/v1/push"
+    mode: non-blocking
+    max-buffer-size: "4m"
+    loki-retries: "10"
+    loki-max-backoff: "5s"
+    loki-timeout: "5s"
+    keep-file: "true"
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  postgres:
+    ports: !reset []
+    networks: !override
+      - private
+
+  redis:
+    ports: !reset []
+    networks: !override
+      - private
+
+  migrate:
+    build:
+      context: ../..
+      dockerfile: infra/docker/backend.Dockerfile
+    command: ["node", "dist/db/migrate.js", "up"]
+    logging: *loki-logging
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      BACKEND_PORT: 3000
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
+      DB_POOL_MAX: ${BACKEND_DB_POOL_MAX:-10}
+      DB_POOL_CONNECTION_TIMEOUT_MS: ${BACKEND_DB_POOL_CONNECTION_TIMEOUT_MS:-5000}
+      DB_POOL_IDLE_TIMEOUT_MS: ${BACKEND_DB_POOL_IDLE_TIMEOUT_MS:-30000}
+      SHUTDOWN_DRAIN_DELAY_MS: ${BACKEND_SHUTDOWN_DRAIN_DELAY_MS:-3000}
+      SHUTDOWN_TIMEOUT_MS: ${BACKEND_SHUTDOWN_TIMEOUT_MS:-25000}
+      OTEL_TRACES_ENABLED: "false"
+    networks:
+      - private
+
+  backend:
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports: !reset []
+    networks: !override
+      - private
+
+  web:
+    environment:
+      # Set PUBLIC_HOST to a real domain, for example example.com, to let
+      # Caddy enable automatic HTTPS. Leave unset for plain HTTP on :8080
+      # inside the container, mapped to host port 80 below.
+      PUBLIC_HOST: ${PUBLIC_HOST:-:8080}
+    ports: !override
+      - "80:8080"
+      - "443:8443"
+    networks: !override
+      - public
+      - private
+    volumes:
+      - ../docker/Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+  prometheus:
+    ports: !reset []
+    networks: !override
+      - private
+
+  grafana:
+    # Keep Grafana off the public interface. Access it with an SSH tunnel:
+    # ssh -L 3001:127.0.0.1:3001 user@server
+    ports: !override
+      - "127.0.0.1:${GRAFANA_PORT}:3000"
+    networks: !override
+      - private
+
+  loki:
+    ports: !override
+      - "127.0.0.1:${LOKI_PORT}:3100"
+    networks: !override
+      - private
+
+  otel-collector:
+    networks: !override
+      - private
+
+  tempo:
+    ports: !reset []
+    networks: !override
+      - private
+
+volumes:
+  caddy-data:
+  caddy-config:
+
+networks:
+  public:
+  private:
+    internal: true

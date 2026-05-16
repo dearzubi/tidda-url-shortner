@@ -1,0 +1,63 @@
+{
+  "name": "@template/backend",
+  "version": "0.0.0",
+  "private": true,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "nest start --watch -b swc --type-check",
+    "build": "nest build",
+    "start": "node --require ./dist/instrumentation.js dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "test": "pnpm test:unit && pnpm test:int",
+    "test:unit": "vitest run --project unit",
+    "test:int": "vitest run --project integration",
+    "test:watch": "vitest",
+    "db:migrate": "tsx src/db/migrate.ts up",
+    "db:migrate:down": "tsx src/db/migrate.ts down",
+    "db:codegen": "kysely-codegen --dialect postgres --out-file src/db/types.ts --url \"$DATABASE_URL\""
+  },
+  "dependencies": {
+    "@nestjs/common": "11.1.19",
+    "@nestjs/core": "11.1.19",
+    "@nestjs/platform-fastify": "11.1.19",
+    "@opentelemetry/api": "1.9.1",
+    "@opentelemetry/auto-instrumentations-node": "0.76.0",
+    "@opentelemetry/exporter-trace-otlp-http": "0.218.0",
+    "@opentelemetry/resources": "2.7.1",
+    "@opentelemetry/sdk-node": "0.218.0",
+    "@opentelemetry/semantic-conventions": "1.41.1",
+    "@template/shared": "workspace:*",
+    "fastify": "5.8.5",
+    "kysely": "0.29.0",
+    "nestjs-pino": "4.6.1",
+    "pg": "8.20.0",
+    "pino": "10.3.1",
+    "pino-http": "11.0.0",
+    "prom-client": "15.1.3",
+    "redis": "5.12.1",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "11.0.21",
+    "@nestjs/testing": "11.1.19",
+    "@swc/cli": "0.8.1",
+    "@swc/core": "1.15.33",
+    "@testcontainers/postgresql": "11.14.0",
+    "@testcontainers/redis": "11.14.0",
+    "@template/tsconfig": "workspace:*",
+    "@types/node": "25.7.0",
+    "@types/pg": "8.20.0",
+    "@vitest/coverage-v8": "4.1.6",
+    "kysely-codegen": "0.20.0",
+    "pino-pretty": "13.1.3",
+    "ts-node": "10.9.2",
+    "tsx": "4.21.0",
+    "typescript": "6.0.3",
+    "unplugin-swc": "1.5.9",
+    "vitest": "4.1.6"
+  }
+}

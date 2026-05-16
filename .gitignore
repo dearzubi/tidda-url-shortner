@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+.next/
+.vite/
+coverage/
+*.tsbuildinfo
+.vitest-attachments/
+__screenshots__/
+
+# Env files
+# Only root .env is gitignored (used for docker-compose values).
+# Per-app .env / .env.[mode] files are committed (safe defaults).
+# Local override files (.env.local, .env.[mode].local) are always ignored.
+/.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+
+# Misc
+*.pid
+.cache/

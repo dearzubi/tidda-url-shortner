@@ -1,0 +1,5 @@
+{
+  "extends": "@template/tsconfig/react.json",
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

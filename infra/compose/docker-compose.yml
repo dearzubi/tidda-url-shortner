@@ -1,0 +1,214 @@
+name: template
+
+x-loki-logging: &loki-logging
+  driver: loki
+  options:
+    loki-url: "http://127.0.0.1:${LOKI_PORT}/loki/api/v1/push"
+    mode: non-blocking
+    max-buffer-size: "4m"
+    loki-retries: "10"
+    loki-max-backoff: "5s"
+    loki-timeout: "5s"
+    keep-file: "true"
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  postgres:
+    image: postgres:18.3-alpine@sha256:54451ecb8ab38c24c3ec123f2fd501303a3a1856a5c66e98cecf2460d5e1e9d7
+    restart: unless-stopped
+    logging: *loki-logging
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      # Postgres 18 changed the declared VOLUME from /var/lib/postgresql/data
+      # to /var/lib/postgresql, and PGDATA is now version-scoped at
+      # /var/lib/postgresql/18/docker. Mount the parent directory so the
+      # version-specific subdirectory survives across upgrades.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8.6.3-alpine@sha256:d146f83b1e0f02fc27c26a50cee39338c736674c5959db84363e6ae3cd9e02d2
+    restart: unless-stopped
+    logging: *loki-logging
+    ports:
+      - "${REDIS_PORT}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: infra/docker/backend.Dockerfile
+    restart: unless-stopped
+    logging: *loki-logging
+    init: true
+    stop_grace_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      BACKEND_PORT: 3000
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
+      DB_POOL_MAX: ${BACKEND_DB_POOL_MAX:-10}
+      DB_POOL_CONNECTION_TIMEOUT_MS: ${BACKEND_DB_POOL_CONNECTION_TIMEOUT_MS:-5000}
+      DB_POOL_IDLE_TIMEOUT_MS: ${BACKEND_DB_POOL_IDLE_TIMEOUT_MS:-30000}
+      SHUTDOWN_DRAIN_DELAY_MS: ${BACKEND_SHUTDOWN_DRAIN_DELAY_MS:-3000}
+      SHUTDOWN_TIMEOUT_MS: ${BACKEND_SHUTDOWN_TIMEOUT_MS:-25000}
+      OTEL_TRACES_ENABLED: "true"
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+      OTEL_SERVICE_NAME: backend
+    ports:
+      - "${BACKEND_PORT}:3000"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3000/readyz').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\"",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+
+  web:
+    build:
+      context: ../..
+      dockerfile: infra/docker/web.Dockerfile
+    restart: unless-stopped
+    logging: *loki-logging
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT}:8080"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+
+  prometheus:
+    image: prom/prometheus:v3.10.0@sha256:4a61322ac1103a0e3aea2a61ef1718422a48fa046441f299d71e660a3bc71ae9
+    restart: unless-stopped
+    logging: *loki-logging
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --storage.tsdb.retention.size=5GB
+    volumes:
+      - ../observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT}:9090"
+
+  grafana:
+    image: grafana/grafana:13.0.1@sha256:0f86bada30d65ef9d0183b90c1e2682ac92d53d95da8bed322b984ea78a4a73a
+    restart: unless-stopped
+    logging: *loki-logging
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "${GRAFANA_PORT}:3000"
+    volumes:
+      - ../observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+
+  loki:
+    image: grafana/loki:3.7.1@sha256:73e905b51a7f917f7a1075e4be68759df30226e03dcb3cd2213b989cc0dc8eb4
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki.yaml
+    volumes:
+      - ../observability/loki/loki.yaml:/etc/loki/loki.yaml:ro
+      - loki-data:/loki
+    ports:
+      - "${LOKI_PORT}:3100"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.148.0@sha256:8164eab2e6bca9c9b0837a8d2f118a6618489008a839db7f9d6510e66be3923c
+    restart: unless-stopped
+    logging: *loki-logging
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    depends_on:
+      tempo:
+        condition: service_started
+    volumes:
+      - ../observability/otel-collector/config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+
+  tempo-init:
+    image: busybox:1.37.0@sha256:1487d0af5f52b4ba31c7e465126ee2123fe3f2305d638e7827681e7cf6c83d5e
+    restart: "no"
+    logging: *loki-logging
+    network_mode: none
+    command:
+      [
+        "sh",
+        "-c",
+        "mkdir -p /data/tempo/blocks /data/tempo/wal && chown -R 10001:10001 /data/tempo",
+      ]
+    volumes:
+      - tempo-data:/data/tempo
+
+  tempo:
+    image: grafana/tempo:2.10.5@sha256:ee21727732c7a7199cb71c3eee9153bbf23f9b0b87619f0555a0cf21a67f1a33
+    restart: unless-stopped
+    logging: *loki-logging
+    command: -config.file=/etc/tempo/tempo.yaml
+    depends_on:
+      tempo-init:
+        condition: service_completed_successfully
+    volumes:
+      - ../observability/tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo-data:/data/tempo
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:
+  prometheus-data:
+  grafana-data:
+  loki-data:
+  tempo-data:

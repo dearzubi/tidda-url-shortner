@@ -1,0 +1,33 @@
+{
+  "name": "template",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.1.1+sha512.d1fdf5f73c617b64fa1a56a81c3c8dfe0e966e33a6010aa256b517ae77be21d93e05affc0de1a83b0e4f29d569f68b446ae8f068cd7247c0bb3df0fb4d7bdf9a",
+  "engines": {
+    "node": ">=24",
+    "pnpm": ">=11"
+  },
+  "scripts": {
+    "preinstall": "node scripts/only-pnpm.cjs",
+    "predev": "pnpm --filter @template/shared build",
+    "dev": "pnpm -r --parallel --filter='./apps/*' dev",
+    "build": "pnpm -r build",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "pretypecheck": "pnpm --filter @template/shared build",
+    "typecheck": "pnpm -r typecheck",
+    "pretest": "pnpm --filter @template/shared build",
+    "test": "pnpm -r test",
+    "db:migrate": "pnpm --filter @template/backend db:migrate",
+    "db:codegen": "pnpm --filter @template/backend db:codegen",
+    "compose": "docker compose --env-file .env -f infra/compose/docker-compose.yml",
+    "compose:prod": "docker compose --env-file .env -f infra/compose/docker-compose.yml -f infra/compose/docker-compose.prod.yml",
+    "prepare": "lefthook install"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.15",
+    "@commitlint/cli": "21.0.1",
+    "@commitlint/config-conventional": "21.0.1",
+    "lefthook": "2.1.6"
+  }
+}
