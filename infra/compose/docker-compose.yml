@@ -1,4 +1,4 @@
-name: template
+name: tidda
 
 x-loki-logging: &loki-logging
   driver: loki

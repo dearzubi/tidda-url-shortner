@@ -34,7 +34,7 @@ describe('<App />', () => {
 
   it('renders the product name as a heading', async () => {
     const screen = await render(<App />);
-    await expect.element(screen.getByRole('heading', { name: /template/i })).toBeVisible();
+    await expect.element(screen.getByRole('heading', { name: /tidda/i })).toBeVisible();
   });
 
   it('shows when the backend status endpoint is reachable', async () => {

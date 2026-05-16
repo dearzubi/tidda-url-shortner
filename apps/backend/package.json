@@ -1,5 +1,5 @@
 {
-  "name": "@template/backend",
+  "name": "@tidda/backend",
   "version": "0.0.0",
   "private": true,
   "files": [
@@ -28,7 +28,7 @@
     "@opentelemetry/resources": "2.7.1",
     "@opentelemetry/sdk-node": "0.218.0",
     "@opentelemetry/semantic-conventions": "1.41.1",
-    "@template/shared": "workspace:*",
+    "@tidda/shared": "workspace:*",
     "fastify": "5.8.5",
     "kysely": "0.29.0",
     "nestjs-pino": "4.6.1",
@@ -48,7 +48,7 @@
     "@swc/core": "1.15.33",
     "@testcontainers/postgresql": "11.14.0",
     "@testcontainers/redis": "11.14.0",
-    "@template/tsconfig": "workspace:*",
+    "@tidda/tsconfig": "workspace:*",
     "@types/node": "25.7.0",
     "@types/pg": "8.20.0",
     "@vitest/coverage-v8": "4.1.6",

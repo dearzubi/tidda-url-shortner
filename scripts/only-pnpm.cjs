@@ -6,7 +6,7 @@ const execPath = process.env.npm_execpath || '';
 const isPnpm = userAgent.startsWith('pnpm') || /[\\/]pnpm/i.test(execPath);
 if (!isPnpm) {
   console.error(
-    '\n[template] Use pnpm. This repo enforces a single package manager.\n' +
+    '\n[tidda] Use pnpm. This repo enforces a single package manager.\n' +
       '  corepack enable && pnpm install\n',
   );
   process.exit(1);

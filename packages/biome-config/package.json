@@ -1,5 +1,5 @@
 {
-  "name": "@template/biome-config",
+  "name": "@tidda/biome-config",
   "version": "0.0.0",
   "private": true,
   "files": [

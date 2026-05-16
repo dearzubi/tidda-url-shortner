@@ -31,4 +31,4 @@ datasources:
         filterByTraceID: true
         filterBySpanID: false
         customQuery: true
-        query: '{compose_project="template"} | json | trace_id="$${__trace.traceId}"'
+        query: '{compose_project="tidda"} | json | trace_id="$${__trace.traceId}"'

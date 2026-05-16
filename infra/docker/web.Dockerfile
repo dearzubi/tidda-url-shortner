@@ -19,8 +19,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 FROM deps AS build
 COPY . .
-RUN pnpm --filter @template/shared build
-RUN pnpm --filter @template/web build
+RUN pnpm --filter @tidda/shared build
+RUN pnpm --filter @tidda/web build
 
 FROM caddy:2.11.3-alpine@sha256:86deaf5e3d3408a6ccec08fbb79989783dd26e206ae10bcf78a801dc8c9ab794 AS runtime
 RUN setcap -r /usr/bin/caddy \

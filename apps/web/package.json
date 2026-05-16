@@ -1,5 +1,5 @@
 {
-  "name": "@template/web",
+  "name": "@tidda/web",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -11,7 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@template/shared": "workspace:*",
+    "@tidda/shared": "workspace:*",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "lucide-react": "1.14.0",
@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.3.0",
-    "@template/tsconfig": "workspace:*",
+    "@tidda/tsconfig": "workspace:*",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.1",

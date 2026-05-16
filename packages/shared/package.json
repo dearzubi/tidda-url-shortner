@@ -1,5 +1,5 @@
 {
-  "name": "@template/shared",
+  "name": "@tidda/shared",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -21,7 +21,7 @@
     "build": "tsc -p tsconfig.json"
   },
   "devDependencies": {
-    "@template/tsconfig": "workspace:*",
+    "@tidda/tsconfig": "workspace:*",
     "typescript": "6.0.3",
     "vitest": "4.1.6"
   },

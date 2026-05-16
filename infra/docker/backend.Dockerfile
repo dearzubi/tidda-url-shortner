@@ -26,13 +26,13 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 FROM deps AS build
 COPY . .
-RUN pnpm --filter @template/shared build
-RUN pnpm --filter @template/backend build
+RUN pnpm --filter @tidda/shared build
+RUN pnpm --filter @tidda/backend build
 # pnpm deploy produces a flat, prod-only node_modules with workspace deps
-# resolved (@template/shared is hard-linked in). The 'files' field in each
+# resolved (@tidda/shared is hard-linked in). The 'files' field in each
 # workspace package.json restricts what gets copied.
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm --filter @template/backend deploy --prod /deploy
+    pnpm --filter @tidda/backend deploy --prod /deploy
 
 FROM node:24.15.0-alpine@sha256:d1b3b4da11eefd5941e7f0b9cf17783fc99d9c6fc34884a665f40a06dbdfc94f AS runtime
 ENV NODE_ENV=production

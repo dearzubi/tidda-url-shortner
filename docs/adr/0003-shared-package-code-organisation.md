@@ -44,9 +44,9 @@ packages/shared/src/
 └── index.ts
 ```
 
-The top-level `index.ts` is the public API of `@template/shared` and
+The top-level `index.ts` is the public API of `@tidda/shared` and
 re-exports each subdirectory's barrel. Consumers import only from
-`@template/shared`, never from sub-paths.
+`@tidda/shared`, never from sub-paths.
 
 ### Pattern B: vertical slices per domain entity (when domain entities appear)
 
@@ -80,7 +80,7 @@ folder.
 - **Pre-creating empty folders** for content we expect to add later.
   Empty placeholders rot; create a folder only when it has content.
 - **Sub-path imports from consumers.** `apps/backend` and `apps/web`
-  import only from `@template/shared`. The top-level barrel is the
+  import only from `@tidda/shared`. The top-level barrel is the
   contract; the internal layout is free to evolve without breaking
   apps.
 

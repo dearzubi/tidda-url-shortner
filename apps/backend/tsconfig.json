@@ -1,5 +1,5 @@
 {
-  "extends": "@template/tsconfig/node.json",
+  "extends": "@tidda/tsconfig/node.json",
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
