@@ -1,4 +1,4 @@
-import { parseSchema } from '@template/shared';
+import { parseSchema } from '@tidda/shared';
 import { type JSX, useEffect, useState } from 'react';
 import { z } from 'zod';
 import { env } from './config/env.js';
@@ -57,7 +57,7 @@ export default function App(): JSX.Element {
       <section className="mx-auto flex max-w-3xl flex-col gap-6">
         <div>
           <p className="text-sm font-medium text-muted-foreground">Full-stack starter</p>
-          <h1 className="mt-2 text-4xl font-semibold tracking-normal">Template</h1>
+          <h1 className="mt-2 text-4xl font-semibold tracking-normal">Tidda</h1>
         </div>
 
         <div className="rounded-lg border border-border bg-card p-5 shadow-sm">

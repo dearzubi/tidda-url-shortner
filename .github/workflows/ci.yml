@@ -32,7 +32,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm audit --audit-level high
       - name: Install Playwright Chromium for browser-mode tests
-        run: pnpm --filter @template/web exec playwright install --with-deps chromium
+        run: pnpm --filter @tidda/web exec playwright install --with-deps chromium
       - run: pnpm test
       - run: pnpm build
       - run: docker build -f infra/docker/backend.Dockerfile .

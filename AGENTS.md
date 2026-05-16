@@ -54,7 +54,7 @@ working in this repo. Read it before touching code.
   `error.issues[].path` and `.message`; do not use the dropped
   `error.errors` or the deprecated `error.format()` /
   `error.flatten()`. The shared validate-or-throw helper is
-  `parseSchema` from `@template/shared`; use it instead of hand-rolling
+  `parseSchema` from `@tidda/shared`; use it instead of hand-rolling
   `safeParse` plus error formatting per call site.
 
 ## Documentation style
@@ -182,11 +182,11 @@ ask the user where it belongs. Never propose committing files from
   (today: `src/validation/`). Domain entities, when added, get their
   own vertical-slice folder (e.g. `src/link/`). Top-level
   `src/index.ts` is the public API; consumers import only from
-  `@template/shared`, never from sub-paths.
+  `@tidda/shared`, never from sub-paths.
 - Types-first where possible; runtime code is fine when shared
   across apps (e.g. zod schemas, `parseSchema`).
 - No app-specific imports.
-- **Throw `SchemaValidationError`** (from `@template/shared`) at every
+- **Throw `SchemaValidationError`** (from `@tidda/shared`) at every
   validation boundary, not generic `Error`. Callers can introspect
   `error.issues` to map failures to HTTP responses or log entries.
 
@@ -234,8 +234,8 @@ Four-file pattern in both `apps/web` and `apps/backend`:
 ```bash
 pnpm install                  # install all workspaces
 pnpm dev                      # backend + web in parallel
-pnpm --filter @template/backend dev
-pnpm --filter @template/web dev
+pnpm --filter @tidda/backend dev
+pnpm --filter @tidda/web dev
 pnpm lint                     # biome check
 pnpm format                   # biome format --write
 pnpm typecheck                # tsc --noEmit, all workspaces

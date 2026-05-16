@@ -1,6 +1,6 @@
 # VPS Production Deployment
 
-This guide deploys Template to a single VPS with Docker Compose.
+This guide deploys Tidda to a single VPS with Docker Compose.
 
 ## Deployment Model
 
@@ -415,7 +415,7 @@ curl -sS -u "admin:<grafana-password>" \
 
 Expected signal:
 
-- `job="template-backend"` has value `1`.
+- `job="tidda-backend"` has value `1`.
 - `job="tempo"` has value `1`.
 
 Check that Prometheus scraped the app-owned connectivity metric:
@@ -427,14 +427,14 @@ curl -sS -u "admin:<grafana-password>" \
 
 Expected signal:
 
-- `app_connectivity_checks_total` exists for `job="template-backend"`.
+- `app_connectivity_checks_total` exists for `job="tidda-backend"`.
 
 Check Loki through Grafana's proxy:
 
 ```bash
 curl -sS -u "admin:<grafana-password>" --get \
   "http://localhost:3001/api/datasources/proxy/uid/loki/loki/api/v1/query_range" \
-  --data-urlencode 'query={compose_project="template", compose_service="backend"} |= "request completed"' \
+  --data-urlencode 'query={compose_project="tidda", compose_service="backend"} |= "request completed"' \
   --data-urlencode 'limit=1'
 ```
 

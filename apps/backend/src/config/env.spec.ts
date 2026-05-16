@@ -63,12 +63,12 @@ describe('parseEnv', () => {
       ...validEnv,
       OTEL_TRACES_ENABLED: 'true',
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: 'http://otel-collector:4318/v1/traces',
-      OTEL_SERVICE_NAME: 'template-backend',
+      OTEL_SERVICE_NAME: 'tidda-backend',
     });
 
     expect(result.OTEL_TRACES_ENABLED).toBe(true);
     expect(result.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT).toBe('http://otel-collector:4318/v1/traces');
-    expect(result.OTEL_SERVICE_NAME).toBe('template-backend');
+    expect(result.OTEL_SERVICE_NAME).toBe('tidda-backend');
   });
 
   it.each([

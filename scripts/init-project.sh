@@ -9,7 +9,7 @@
 #   bash scripts/init-project.sh acme
 #
 # This script:
-#   1. Replaces `@template/` with `@<scope>/` across every tracked file
+#   1. Replaces `@tidda/` with `@<scope>/` across every tracked file
 #      (workspace package names and imports).
 #   2. Replaces the project name `template` in well-known infrastructure
 #      identifiers (compose project, prom job_name, grafana provider).
@@ -24,7 +24,7 @@
 #   - .git history (the template's history travels with the clone; consider
 #     `rm -rf .git && git init` for a clean start)
 #
-# Re-running is safe but a no-op if `@template/` is already replaced.
+# Re-running is safe but a no-op if `@tidda/` is already replaced.
 
 set -euo pipefail
 
@@ -45,13 +45,13 @@ REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$REPO_ROOT"
 DISPLAY_NAME="$(printf '%s' "$SCOPE" | tr '-' ' ' | awk '{ for (i = 1; i <= NF; i++) $i = toupper(substr($i, 1, 1)) substr($i, 2); print }')"
 
-echo "==> Renaming @template/ to @${SCOPE}/"
+echo "==> Renaming @tidda/ to @${SCOPE}/"
 # Use perl for portable in-place edit (works on macOS and GNU Linux)
 git ls-files | while IFS= read -r file; do
-  if grep -q '@template/' "$file" 2>/dev/null; then
-    perl -pi -e "s|\@template/|\@${SCOPE}/|g" "$file"
+  if grep -q '@tidda/' "$file" 2>/dev/null; then
+    perl -pi -e "s|\@tidda/|\@${SCOPE}/|g" "$file"
   fi
-  if grep -q 'template-backend' "$file" 2>/dev/null; then
+  if grep -q 'tidda-backend' "$file" 2>/dev/null; then
     perl -pi -e "s|\btemplate-backend\b|${SCOPE}-backend|g" "$file"
   fi
 done

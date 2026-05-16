@@ -1,4 +1,4 @@
-import { parseSchema } from '@template/shared';
+import { parseSchema } from '@tidda/shared';
 import { z } from 'zod';
 
 const ApiUrlSchema = z
