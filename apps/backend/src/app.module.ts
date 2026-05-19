@@ -3,6 +3,7 @@ import type { Env } from './config/env';
 import { ConnectivityModule } from './connectivity/connectivity.module';
 import { DatabaseModule } from './db/database.module';
 import { HealthModule } from './health/health.module';
+import { LinksModule } from './links/links.module';
 import { LoggingModule } from './logging/logging.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { RedisModule } from './redis/redis.module';
@@ -38,6 +39,7 @@ export class AppModule {
         ConnectivityModule,
         HealthModule,
         MetricsModule,
+        LinksModule,
       ],
     };
   }
