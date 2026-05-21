@@ -15,6 +15,10 @@
 		reverse_proxy backend:3000
 	}
 
+	handle /s/* {
+		reverse_proxy backend:3000
+	}
+
 	header {
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin

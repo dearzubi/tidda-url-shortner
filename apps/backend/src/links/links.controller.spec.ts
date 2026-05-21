@@ -73,7 +73,7 @@ describe('LinksController', () => {
     expect(res.statusCode).toBe(201);
     expect(res.json()).toEqual({
       slug: '100000',
-      shortPath: '/100000',
+      shortPath: '/s/100000',
       destinationUrl: 'https://example.com/a',
       createdAt: '2026-05-19T12:00:00.000Z',
     });
@@ -137,16 +137,23 @@ describe('LinksController', () => {
   });
 
   it('redirects a stored slug to its destination URL', async () => {
-    const res = await app.inject({ method: 'GET', url: '/100000' });
+    const res = await app.inject({ method: 'GET', url: '/s/100000' });
 
     expect(res.statusCode).toBe(302);
     expect(res.headers.location).toBe('https://example.com/a');
   });
 
+  it('does not resolve generated slugs from the root route space', async () => {
+    const res = await app.inject({ method: 'GET', url: '/100000' });
+
+    expect(res.statusCode).toBe(404);
+    expect(service.resolveLink).not.toHaveBeenCalled();
+  });
+
   it('returns 404 for a missing slug', async () => {
     service.resolveLink.mockResolvedValue(null);
 
-    const res = await app.inject({ method: 'GET', url: '/Missing' });
+    const res = await app.inject({ method: 'GET', url: '/s/Missing' });
 
     expect(res.statusCode).toBe(404);
   });

@@ -114,12 +114,16 @@ describe('links HTTP flow (integration)', () => {
     const body = CreateLinkResponseSchema.parse(create.json());
     expect(body.destinationUrl).toBe('https://example.com/a');
     expect(body.slug).toMatch(GENERATED_LINK_SLUG_PATTERN);
-    expect(body.shortPath).toBe(`/${body.slug}`);
+    expect(body.shortPath).toBe(`/s/${body.slug}`);
 
     const redirect = await app.inject({ method: 'GET', url: body.shortPath });
 
     expect(redirect.statusCode).toBe(302);
     expect(redirect.headers.location).toBe('https://example.com/a');
+
+    const rootSlug = await app.inject({ method: 'GET', url: `/${body.slug}` });
+
+    expect(rootSlug.statusCode).toBe(404);
   });
 
   it('rejects anonymous link creation after the IP bucket is exhausted', async () => {

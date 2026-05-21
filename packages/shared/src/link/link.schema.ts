@@ -22,7 +22,7 @@ export const CreateLinkRequestSchema = z.object({
 
 export const CreateLinkResponseSchema = z.object({
   slug: LinkSlugSchema,
-  shortPath: z.templateLiteral(['/', LinkSlugSchema]),
+  shortPath: z.templateLiteral(['/s/', LinkSlugSchema]),
   destinationUrl: DestinationUrlSchema,
   createdAt: z.iso.datetime(),
 });

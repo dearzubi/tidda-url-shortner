@@ -28,7 +28,7 @@ export class LinksController {
     return toCreateLinkResponse(link);
   }
 
-  @Get(':slug')
+  @Get('s/:slug')
   @Redirect(undefined, HttpStatus.FOUND)
   async redirect(@Param('slug') slug: string): Promise<{ url: string }> {
     const link = await this.links.resolveLink(slug);
@@ -44,7 +44,7 @@ export class LinksController {
 function toCreateLinkResponse(link: Link): CreateLinkResponse {
   return {
     slug: link.slug,
-    shortPath: `/${link.slug}`,
+    shortPath: `/s/${link.slug}`,
     destinationUrl: link.destinationUrl,
     createdAt: link.createdAt.toISOString(),
   };
