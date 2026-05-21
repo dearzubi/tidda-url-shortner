@@ -1,4 +1,5 @@
-import { Injectable, type OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, type OnModuleInit } from '@nestjs/common';
+import { RedisService } from '../redis/redis.service';
 import { REDIS_TOKEN_BUCKET_SCRIPT } from './redis-token-bucket.script';
 
 export type RedisScriptLoaderClient = {
@@ -14,7 +15,7 @@ export class RedisTokenBucketScriptLoader implements OnModuleInit {
   private scriptSha: string | undefined;
   private loadPromise: Promise<string> | undefined;
 
-  constructor(private readonly redis: RedisScriptClientProvider) {}
+  constructor(@Inject(RedisService) private readonly redis: RedisScriptClientProvider) {}
 
   async onModuleInit(): Promise<void> {
     try {
