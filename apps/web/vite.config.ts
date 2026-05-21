@@ -23,6 +23,10 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
         },
+        '/s': {
+          target: `http://localhost:${backendPort}`,
+          changeOrigin: true,
+        },
       },
     },
     optimizeDeps: {

@@ -3,6 +3,10 @@
 		reverse_proxy backend:3000
 	}
 
+	handle /s/* {
+		reverse_proxy backend:3000
+	}
+
 	handle {
 		root * /usr/share/caddy
 		try_files {path} /index.html

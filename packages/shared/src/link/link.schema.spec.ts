@@ -45,13 +45,13 @@ describe('link API schemas', () => {
     expect(
       CreateLinkResponseSchema.parse({
         slug: '100000',
-        shortPath: '/100000',
+        shortPath: '/s/100000',
         destinationUrl: 'https://example.com/a',
         createdAt: '2026-05-19T12:00:00.000Z',
       }),
     ).toEqual({
       slug: '100000',
-      shortPath: '/100000',
+      shortPath: '/s/100000',
       destinationUrl: 'https://example.com/a',
       createdAt: '2026-05-19T12:00:00.000Z',
     });
