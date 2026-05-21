@@ -3,7 +3,8 @@ import {
   LOCAL_BUCKET_CLEANUP_INTERVAL_MS,
   LocalTokenBucketStore,
 } from './local-token-bucket.store';
-import type { ConsumeRateLimitInput, TokenBucketPolicy } from './rate-limit.types';
+import type { TokenBucketPolicy } from './rate-limit.policy-schema';
+import type { ConsumeRateLimitInput } from './rate-limit.types';
 
 const POLICY_NAME = 'test.local';
 

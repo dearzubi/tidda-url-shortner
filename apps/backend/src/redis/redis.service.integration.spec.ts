@@ -32,4 +32,12 @@ describe('RedisService (integration)', () => {
   it('checks a live Redis connection with PING', async () => {
     await expect(service.checkConnection()).resolves.toBeUndefined();
   });
+
+  it('returns an open Redis client through the shared connection helper', async () => {
+    const client = await service.getOpenClient();
+
+    expect(client.isOpen).toBe(true);
+    await expect(client.ping()).resolves.toBe('PONG');
+    await expect(service.getOpenClient()).resolves.toBe(client);
+  });
 });

@@ -1,6 +1,7 @@
-import type { TokenBucketPolicy } from './rate-limit.types';
+import { parseSchema } from '@tidda/shared';
+import { RateLimitPoliciesSchema, type TokenBucketPolicy } from './rate-limit.policy-schema';
 
-export const RATE_LIMIT_POLICIES = {
+const RATE_LIMIT_POLICY_DEFINITIONS = {
   'links.create.anonymous': {
     capacity: 10,
     refillTokens: 10,
@@ -15,10 +16,21 @@ export const RATE_LIMIT_POLICIES = {
       keyTtlMs: 180_000,
     },
   },
-} satisfies Record<string, TokenBucketPolicy>;
+};
 
-export type RateLimitPolicyName = keyof typeof RATE_LIMIT_POLICIES;
+export function parseRateLimitPolicies(source: unknown): Record<string, TokenBucketPolicy> {
+  return parseSchema(RateLimitPoliciesSchema, source, 'Invalid rate-limit policies');
+}
+
+export const RATE_LIMIT_POLICIES = parseRateLimitPolicies(RATE_LIMIT_POLICY_DEFINITIONS);
+
+export type RateLimitPolicyName = keyof typeof RATE_LIMIT_POLICY_DEFINITIONS;
 
 export function getRateLimitPolicy(name: RateLimitPolicyName): TokenBucketPolicy {
-  return RATE_LIMIT_POLICIES[name];
+  const policy = RATE_LIMIT_POLICIES[name];
+  if (!policy) {
+    throw new Error(`Unknown rate-limit policy: ${name}`);
+  }
+
+  return policy;
 }

@@ -1,8 +1,7 @@
+import type { LocalTokenBucketPolicy } from './rate-limit.policy-schema';
 import type { ConsumeRateLimitInput, RateLimitDecision, RateLimitStore } from './rate-limit.types';
 
 export const LOCAL_BUCKET_CLEANUP_INTERVAL_MS = 60_000;
-
-type LocalFallbackPolicy = ConsumeRateLimitInput['policy']['fallback'];
 
 type LocalBucketState = {
   tokens: number;
@@ -57,7 +56,7 @@ export class LocalTokenBucketStore implements RateLimitStore {
     return this.buckets.size;
   }
 
-  private getBucket(key: string, nowMs: number, policy: LocalFallbackPolicy): LocalBucketState {
+  private getBucket(key: string, nowMs: number, policy: LocalTokenBucketPolicy): LocalBucketState {
     const existing = this.buckets.get(key);
     if (existing && existing.expiresAtMs > nowMs) {
       return existing;

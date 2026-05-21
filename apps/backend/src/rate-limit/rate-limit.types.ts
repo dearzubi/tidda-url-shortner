@@ -1,19 +1,4 @@
-export type TokenBucketPolicy = {
-  capacity: number;
-  refillTokens: number;
-  refillIntervalMs: number;
-  cost: number;
-  redisKeyTtlMs: number;
-  fallback: LocalTokenBucketPolicy;
-};
-
-export type LocalTokenBucketPolicy = {
-  capacity: number;
-  refillTokens: number;
-  refillIntervalMs: number;
-  cost: number;
-  keyTtlMs: number;
-};
+import type { TokenBucketPolicy } from './rate-limit.policy-schema';
 
 export type RateLimitIdentity = {
   kind: 'ip';
