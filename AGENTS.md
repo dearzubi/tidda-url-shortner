@@ -19,6 +19,8 @@ working in this repo. Read it before touching code.
   explicitly asks for one. The subject line is the whole message by
   default.
 - **Lint/format:** Biome only. No ESLint, no Prettier.
+- **Before committing:** Run `pnpm lint` before every commit attempt.
+  Do not rely on Lefthook as the first formatting or lint check.
 - **Tests:** Vitest only. No Jest anywhere, including `apps/backend`.
 - **Do not commit** local overrides (`*.env.local`, `*.env.*.local`) or
   the root `/.env`. Per-app `.env` and `.env.[mode]` ARE committed with
