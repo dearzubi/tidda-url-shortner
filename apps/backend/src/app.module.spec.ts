@@ -10,6 +10,7 @@ import { RedisService } from './redis/redis.service';
 const env: Env = {
   NODE_ENV: 'test',
   BACKEND_PORT: 3000,
+  BACKEND_TRUSTED_PROXIES: false,
   DATABASE_URL: 'postgres://u:p@localhost:5432/db',
   REDIS_URL: 'redis://localhost:6379',
   DB_POOL_MAX: 10,

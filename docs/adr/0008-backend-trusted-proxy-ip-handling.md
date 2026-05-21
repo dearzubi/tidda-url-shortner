@@ -36,6 +36,9 @@ BACKEND_TRUSTED_PROXIES=172.30.10.0/29
 
 Parse this value once in backend env configuration and pass it to
 Fastify's `trustProxy` option. An empty value means `false`.
+The value `true` is accepted only as an explicit development escape
+hatch for unusual local topologies. Production must use an explicit IP
+or CIDR list, not `true`.
 
 Production compose should use a dedicated Docker network for public
 request forwarding:

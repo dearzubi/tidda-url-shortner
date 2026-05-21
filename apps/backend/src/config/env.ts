@@ -1,4 +1,5 @@
 import { parseSchema } from '@tidda/shared';
+import ipaddr from 'ipaddr.js';
 import { z } from 'zod';
 
 const BooleanStringSchema = z.preprocess(
@@ -7,10 +8,63 @@ const BooleanStringSchema = z.preprocess(
 );
 const TcpPortSchema = z.coerce.number().int().min(1).max(65535);
 
+function parseTrustedProxies(value: unknown): false | true | string[] | unknown {
+  if (value === undefined || value === '') {
+    return false;
+  }
+
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  if (value === 'true') {
+    return true;
+  }
+
+  if (value === 'false') {
+    return false;
+  }
+
+  const proxies = value
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+
+  return proxies.length === 0 ? false : proxies;
+}
+
+function isTrustedProxyEntry(value: string): boolean {
+  try {
+    if (value.includes('/')) {
+      ipaddr.parseCIDR(value);
+      return true;
+    }
+
+    ipaddr.parse(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const TrustedProxiesSchema = z.preprocess(
+  parseTrustedProxies,
+  z.union([
+    z.literal(false),
+    z.literal(true),
+    z.array(
+      z.string().trim().min(1).refine(isTrustedProxyEntry, {
+        message: 'BACKEND_TRUSTED_PROXIES entries must be valid IP addresses or CIDR ranges',
+      }),
+    ),
+  ]),
+);
+
 const EnvSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']),
     BACKEND_PORT: TcpPortSchema,
+    BACKEND_TRUSTED_PROXIES: TrustedProxiesSchema,
     DATABASE_URL: z
       .url()
       .refine((url) => url.startsWith('postgres://') || url.startsWith('postgresql://'), {
