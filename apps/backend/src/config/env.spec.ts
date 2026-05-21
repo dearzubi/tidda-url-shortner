@@ -58,6 +58,51 @@ describe('parseEnv', () => {
     expect(result.SHUTDOWN_TIMEOUT_MS).toBe(45000);
   });
 
+  it('defaults BACKEND_TRUSTED_PROXIES to false', () => {
+    const result = parseEnv(validEnv);
+
+    expect(result.BACKEND_TRUSTED_PROXIES).toBe(false);
+  });
+
+  it('parses BACKEND_TRUSTED_PROXIES as a comma-separated list', () => {
+    const result = parseEnv({
+      ...validEnv,
+      BACKEND_TRUSTED_PROXIES: '172.30.10.0/29,10.0.0.10',
+    });
+
+    expect(result.BACKEND_TRUSTED_PROXIES).toEqual(['172.30.10.0/29', '10.0.0.10']);
+  });
+
+  it('parses BACKEND_TRUSTED_PROXIES=true as trust all proxies', () => {
+    const result = parseEnv({ ...validEnv, BACKEND_TRUSTED_PROXIES: 'true' });
+
+    expect(result.BACKEND_TRUSTED_PROXIES).toBe(true);
+  });
+
+  it('treats blank BACKEND_TRUSTED_PROXIES as disabled', () => {
+    const result = parseEnv({ ...validEnv, BACKEND_TRUSTED_PROXIES: '' });
+
+    expect(result.BACKEND_TRUSTED_PROXIES).toBe(false);
+  });
+
+  it('rejects invalid BACKEND_TRUSTED_PROXIES entries', () => {
+    expect(() =>
+      parseEnv({
+        ...validEnv,
+        BACKEND_TRUSTED_PROXIES: '172.30.10.0/29,not-a-cidr',
+      }),
+    ).toThrow(/BACKEND_TRUSTED_PROXIES/);
+  });
+
+  it('rejects invalid BACKEND_TRUSTED_PROXIES CIDR prefixes', () => {
+    expect(() =>
+      parseEnv({
+        ...validEnv,
+        BACKEND_TRUSTED_PROXIES: '172.30.10.0/99',
+      }),
+    ).toThrow(/BACKEND_TRUSTED_PROXIES/);
+  });
+
   it('accepts explicit OpenTelemetry tracing config', () => {
     const result = parseEnv({
       ...validEnv,

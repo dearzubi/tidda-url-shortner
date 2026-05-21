@@ -8,6 +8,10 @@
       {
         "include": "db/migrations/**/*",
         "outDir": "dist"
+      },
+      {
+        "include": "rate-limit/**/*.lua",
+        "outDir": "dist"
       }
     ],
     "tsConfigPath": "tsconfig.build.json"

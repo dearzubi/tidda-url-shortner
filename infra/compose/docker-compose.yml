@@ -66,6 +66,7 @@ services:
     environment:
       NODE_ENV: production
       BACKEND_PORT: 3000
+      BACKEND_TRUSTED_PROXIES: "${BACKEND_TRUSTED_PROXIES:-}"
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379
       DB_POOL_MAX: ${BACKEND_DB_POOL_MAX:-10}

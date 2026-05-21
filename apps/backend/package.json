@@ -30,6 +30,7 @@
     "@opentelemetry/semantic-conventions": "1.41.1",
     "@tidda/shared": "workspace:*",
     "fastify": "5.8.5",
+    "ipaddr.js": "2.4.0",
     "kysely": "0.29.0",
     "nestjs-pino": "4.6.1",
     "pg": "8.20.0",

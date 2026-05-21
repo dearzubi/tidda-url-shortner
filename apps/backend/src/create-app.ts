@@ -6,10 +6,19 @@ import { AppModule } from './app.module';
 import type { Env } from './config/env';
 import type { TelemetrySdk } from './telemetry/telemetry';
 
-export function createFastifyAdapter(): FastifyAdapter {
+export type TrustedProxyConfig = false | true | string[];
+
+export type FastifyAdapterOptions = {
+  trustProxy: TrustedProxyConfig;
+};
+
+export function createFastifyAdapter(
+  options: FastifyAdapterOptions = { trustProxy: false },
+): FastifyAdapter {
   return new FastifyAdapter({
     logger: false,
     requestIdHeader: 'x-request-id',
+    trustProxy: options.trustProxy,
     genReqId: () => randomUUID(),
   });
 }
@@ -35,7 +44,7 @@ export async function createApp(
 ): Promise<NestFastifyApplication> {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule.forRoot(env, telemetry),
-    createFastifyAdapter(),
+    createFastifyAdapter({ trustProxy: env.BACKEND_TRUSTED_PROXIES }),
     { bufferLogs: true },
   );
 

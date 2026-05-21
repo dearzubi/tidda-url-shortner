@@ -11,6 +11,7 @@ export type RedisOptions = {
 @Injectable()
 export class RedisService implements OnApplicationShutdown {
   private readonly client: RedisClientType;
+  private connectPromise: Promise<RedisClientType> | undefined;
 
   constructor(@Inject(REDIS_OPTIONS) options: RedisOptions) {
     this.client = createClient({
@@ -27,16 +28,27 @@ export class RedisService implements OnApplicationShutdown {
     return this.client;
   }
 
+  async getOpenClient(): Promise<RedisClientType> {
+    if (this.client.isOpen) {
+      return this.client;
+    }
+
+    this.connectPromise ??= this.client
+      .connect()
+      .then(() => this.client)
+      .finally(() => {
+        this.connectPromise = undefined;
+      });
+    return this.connectPromise;
+  }
+
   createSubscriber(): RedisClientType {
     return this.client.duplicate();
   }
 
   async checkConnection(): Promise<void> {
-    if (!this.client.isOpen) {
-      await this.client.connect();
-    }
-
-    const response = await this.client.ping();
+    const client = await this.getOpenClient();
+    const response = await client.ping();
     if (response !== 'PONG') {
       throw new Error(`Unexpected Redis PING response: ${response}`);
     }
