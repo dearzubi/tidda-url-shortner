@@ -15,6 +15,8 @@ import * as createLinksMigration from '../db/migrations/202605190001_create_link
 import type { DB } from '../db/types';
 import { LoggingModule } from '../logging/logging.module';
 import { getRateLimitPolicy } from '../rate-limit/rate-limit.policies';
+import { REDIS_RATE_LIMIT_STORE } from '../rate-limit/rate-limit.service';
+import type { RateLimitStore } from '../rate-limit/rate-limit.types';
 import { RedisModule } from '../redis/redis.module';
 import { LinksModule } from './links.module';
 
@@ -146,6 +148,74 @@ describe('links HTTP flow (integration)', () => {
     expect(rejected.statusCode).toBe(429);
     expect(rejected.headers['retry-after']).toBeDefined();
     expect(rejected.headers['x-ratelimit-remaining']).toBe('0');
+  });
+
+  it('uses the local fallback limiter when Redis rate limiting fails', async () => {
+    const failingRedisStore: RateLimitStore = {
+      async consume(): Promise<never> {
+        throw new Error('redis down');
+      },
+    };
+    const policy = getRateLimitPolicy('links.create.anonymous');
+    const allowedRequestCount = Math.floor(policy.fallback.capacity / policy.fallback.cost);
+    const remoteAddress = '203.0.113.12';
+
+    const moduleRef = await Test.createTestingModule({
+      imports: [
+        LoggingModule.forRoot({
+          level: 'error',
+          pretty: false,
+          service: 'backend',
+        }),
+        DatabaseModule.forRoot({
+          databaseUrl: container.getConnectionUri(),
+          maxConnections: 10,
+          connectionTimeoutMs: 5000,
+          idleTimeoutMs: 30000,
+        }),
+        RedisModule.forRoot({
+          redisUrl: redisContainer.getConnectionUrl(),
+          connectionTimeoutMs: 5000,
+        }),
+        LinksModule,
+      ],
+    })
+      .overrideProvider(REDIS_RATE_LIMIT_STORE)
+      .useValue(failingRedisStore)
+      .compile();
+    const fallbackApp = moduleRef.createNestApplication<NestFastifyApplication>(
+      new FastifyAdapter(),
+    );
+
+    try {
+      await fallbackApp.init();
+      await fallbackApp.getHttpAdapter().getInstance().ready();
+
+      for (let requestIndex = 0; requestIndex < allowedRequestCount; requestIndex += 1) {
+        const allowed = await fallbackApp.inject({
+          method: 'POST',
+          url: '/links',
+          remoteAddress,
+          payload: { destinationUrl: `https://example.com/fallback-${requestIndex}` },
+        });
+
+        expect(allowed.statusCode).toBe(201);
+      }
+
+      const rejected = await fallbackApp.inject({
+        method: 'POST',
+        url: '/links',
+        remoteAddress,
+        payload: { destinationUrl: 'https://example.com/fallback-exhausted' },
+      });
+
+      expect(rejected.statusCode).toBe(429);
+      expect(rejected.headers['retry-after']).toBeDefined();
+      expect(rejected.headers['x-ratelimit-limit']).toBe(policy.fallback.capacity.toString());
+      expect(rejected.headers['x-ratelimit-remaining']).toBe('0');
+    } finally {
+      await fallbackApp.close();
+    }
   });
 });
 
