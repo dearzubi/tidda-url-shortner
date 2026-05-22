@@ -48,6 +48,28 @@ services:
       timeout: 3s
       retries: 10
 
+  migrate:
+    build:
+      context: ../..
+      dockerfile: infra/docker/backend.Dockerfile
+    command: ["node", "dist/db/migrate.js", "up"]
+    restart: "no"
+    logging: *loki-logging
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      BACKEND_PORT: 3000
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
+      DB_POOL_MAX: ${BACKEND_DB_POOL_MAX:-10}
+      DB_POOL_CONNECTION_TIMEOUT_MS: ${BACKEND_DB_POOL_CONNECTION_TIMEOUT_MS:-5000}
+      DB_POOL_IDLE_TIMEOUT_MS: ${BACKEND_DB_POOL_IDLE_TIMEOUT_MS:-30000}
+      SHUTDOWN_DRAIN_DELAY_MS: ${BACKEND_SHUTDOWN_DRAIN_DELAY_MS:-3000}
+      SHUTDOWN_TIMEOUT_MS: ${BACKEND_SHUTDOWN_TIMEOUT_MS:-25000}
+      OTEL_TRACES_ENABLED: "false"
+
   backend:
     build:
       context: ../..
@@ -57,8 +79,8 @@ services:
     init: true
     stop_grace_period: 30s
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       otel-collector:

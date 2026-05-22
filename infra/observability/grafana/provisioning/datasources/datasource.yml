@@ -11,24 +11,8 @@ datasources:
     uid: loki
     access: proxy
     url: http://loki:3100
-    jsonData:
-      derivedFields:
-        - datasourceUid: tempo
-          matcherRegex: '"trace_id":"([a-f0-9]+)"'
-          name: TraceID
-          url: '$${__value.raw}'
   - name: Tempo
     type: tempo
     uid: tempo
     access: proxy
     url: http://tempo:3200
-    jsonData:
-      tracesToLogsV2:
-        datasourceUid: loki
-        spanStartTimeShift: '-30s'
-        spanEndTimeShift: '30s'
-        tags: []
-        filterByTraceID: true
-        filterBySpanID: false
-        customQuery: true
-        query: '{compose_project="tidda"} | json | trace_id="$${__trace.traceId}"'
