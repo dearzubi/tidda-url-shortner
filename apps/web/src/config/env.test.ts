@@ -26,4 +26,18 @@ describe('parseEnv (web)', () => {
   it('throws when VITE_API_URL is a protocol-relative URL', () => {
     expect(() => parseEnv({ VITE_API_URL: '//example.com/api' })).toThrow(/VITE_API_URL/);
   });
+
+  it('throws when VITE_API_URL uses an unsupported absolute URL scheme', () => {
+    expect(() => parseEnv({ VITE_API_URL: 'ftp://example.com/api' })).toThrow(/VITE_API_URL/);
+    expect(() => parseEnv({ VITE_API_URL: 'javascript:alert(1)' })).toThrow(/VITE_API_URL/);
+  });
+
+  it('throws when absolute VITE_API_URL includes query strings or fragments', () => {
+    expect(() => parseEnv({ VITE_API_URL: 'https://example.com/api?token=x' })).toThrow(
+      /VITE_API_URL/,
+    );
+    expect(() => parseEnv({ VITE_API_URL: 'https://example.com/api#status' })).toThrow(
+      /VITE_API_URL/,
+    );
+  });
 });

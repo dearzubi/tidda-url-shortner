@@ -210,7 +210,7 @@ services:
       [
         "sh",
         "-c",
-        "mkdir -p /data/tempo/blocks /data/tempo/wal && chown -R 10001:10001 /data/tempo",
+        "mkdir -p /data/tempo/blocks /data/tempo/wal /data/tempo/generator/traces /data/tempo/generator/wal && chown -R 10001:10001 /data/tempo",
       ]
     volumes:
       - tempo-data:/data/tempo

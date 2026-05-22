@@ -1,12 +1,42 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50: oklch(0.98 0.02 250);
-  --color-brand-500: oklch(0.65 0.18 250);
-  --color-brand-900: oklch(0.3 0.1 250);
+  --color-background: oklch(0.985 0.018 170);
+  --color-foreground: oklch(0.18 0.035 178);
+  --color-card: oklch(0.997 0.006 170);
+  --color-card-foreground: oklch(0.18 0.035 178);
+  --color-muted: oklch(0.94 0.025 174);
+  --color-muted-foreground: oklch(0.43 0.035 178);
+  --color-border: oklch(0.86 0.04 174);
+  --color-input: oklch(0.89 0.035 174);
+  --color-primary: oklch(0.69 0.16 28);
+  --color-primary-foreground: oklch(0.99 0.006 28);
+  --color-secondary: oklch(0.94 0.025 174);
+  --color-secondary-foreground: oklch(0.2 0.05 178);
+  --color-accent: oklch(0.88 0.07 170);
+  --color-accent-foreground: oklch(0.2 0.05 178);
+  --color-destructive: oklch(0.58 0.22 25);
+  --color-destructive-foreground: oklch(0.99 0.006 25);
+  --color-ring: oklch(0.66 0.12 174);
   --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --radius-md: 0.5rem;
 }
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--color-background);
+}
+
+button,
+input {
+  font: inherit;
 }

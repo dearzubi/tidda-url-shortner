@@ -15,11 +15,22 @@ compactor:
   compaction:
     block_retention: 72h
 
+metrics_generator:
+  processor:
+    local_blocks:
+      filter_server_spans: false
+  traces_storage:
+    path: /data/tempo/generator/traces
+  storage:
+    path: /data/tempo/generator/wal
+
 overrides:
   defaults:
     ingestion:
       rate_limit_bytes: 1048576
       burst_size_bytes: 2097152
+    metrics_generator:
+      processors: [local-blocks]
 
 storage:
   trace:

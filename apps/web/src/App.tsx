@@ -1,81 +1,68 @@
-import { parseSchema } from '@tidda/shared';
-import { type JSX, useEffect, useState } from 'react';
-import { z } from 'zod';
+import { useQuery } from '@tanstack/react-query';
+import type { JSX } from 'react';
 import { env } from './config/env.js';
-
-const BackendStatusSchema = z.object({
-  status: z.literal('ok'),
-  service: z.string(),
-});
-
-type ConnectionState =
-  | { status: 'loading' }
-  | { status: 'connected'; service: string }
-  | { status: 'error' };
-
-function apiUrl(path: string): string {
-  const baseUrl = env.VITE_API_URL.endsWith('/') ? env.VITE_API_URL.slice(0, -1) : env.VITE_API_URL;
-  return `${baseUrl}${path}`;
-}
+import { LinkCreator } from './features/link-creator/LinkCreator.js';
+import { RecentLinks } from './features/recent-links/RecentLinks.js';
+import { useRecentLinks } from './features/recent-links/use-recent-links.js';
+import { getBackendStatus } from './lib/api/status-api.js';
 
 export default function App(): JSX.Element {
-  const [connection, setConnection] = useState<ConnectionState>({ status: 'loading' });
-
-  useEffect(() => {
-    const abortController = new AbortController();
-
-    async function checkBackend(): Promise<void> {
-      try {
-        const response = await fetch(apiUrl('/status'), { signal: abortController.signal });
-        if (!response.ok) {
-          setConnection({ status: 'error' });
-          return;
-        }
-
-        const body = parseSchema(
-          BackendStatusSchema,
-          await response.json(),
-          'Invalid backend status',
-        );
-        setConnection({ status: 'connected', service: body.service });
-      } catch (err) {
-        if (!(err instanceof DOMException && err.name === 'AbortError')) {
-          setConnection({ status: 'error' });
-        }
-      }
-    }
-
-    void checkBackend();
-
-    return () => {
-      abortController.abort();
-    };
-  }, []);
+  const recentLinks = useRecentLinks();
+  const status = useQuery({
+    queryKey: ['backend-status'],
+    queryFn: () => getBackendStatus(env.VITE_API_URL),
+  });
 
   return (
-    <main className="min-h-screen bg-background px-6 py-10 text-foreground">
-      <section className="mx-auto flex max-w-3xl flex-col gap-6">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">Full-stack starter</p>
-          <h1 className="mt-2 text-4xl font-semibold tracking-normal">Tidda</h1>
-        </div>
+    <main className="min-h-screen bg-background px-5 py-8 text-foreground sm:px-6 sm:py-12">
+      <div className="mx-auto flex max-w-3xl flex-col gap-8">
+        <header className="flex flex-col gap-4">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-lg font-black tracking-normal">Tidda</p>
+            <BackendStatusDot
+              state={status.isSuccess ? 'online' : status.isError ? 'offline' : 'checking'}
+            />
+          </div>
+          <div className="max-w-2xl">
+            <p className="text-sm font-semibold text-muted-foreground">Short links, easy rhythm</p>
+            <h1 className="mt-3 text-4xl font-black tracking-normal sm:text-5xl">
+              Make long links easier to share.
+            </h1>
+            <p className="mt-4 max-w-xl text-base leading-7 text-muted-foreground">
+              Paste a URL, create a tidy Tidda link, and keep your latest links on this device until
+              you clear them.
+            </p>
+          </div>
+        </header>
 
-        <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-          <p className="text-sm font-medium text-muted-foreground">Backend status</p>
-          {connection.status === 'loading' ? (
-            <p className="mt-2 text-lg font-semibold">Checking backend...</p>
-          ) : null}
-          {connection.status === 'connected' ? (
-            <div className="mt-2 flex flex-col gap-1">
-              <p className="text-lg font-semibold">Backend connected</p>
-              <p className="text-sm text-muted-foreground">{connection.service}</p>
-            </div>
-          ) : null}
-          {connection.status === 'error' ? (
-            <p className="mt-2 text-lg font-semibold text-destructive">Backend unavailable</p>
-          ) : null}
-        </div>
-      </section>
+        <LinkCreator onCreated={recentLinks.addLink} />
+        <RecentLinks links={recentLinks.links} onClear={recentLinks.clearLinks} />
+      </div>
     </main>
+  );
+}
+
+type BackendStatusDotProps = {
+  state: 'checking' | 'online' | 'offline';
+};
+
+function BackendStatusDot({ state }: BackendStatusDotProps): JSX.Element {
+  const label = {
+    checking: 'Checking backend status',
+    online: 'Backend reachable',
+    offline: 'Backend unavailable',
+  }[state];
+
+  const tone = {
+    checking: 'bg-muted',
+    online: 'bg-accent',
+    offline: 'bg-destructive',
+  }[state];
+
+  return (
+    <div className="inline-flex items-center gap-2 text-sm text-muted-foreground" title={label}>
+      <span className={`h-2.5 w-2.5 rounded-full ${tone}`} />
+      <span>{label}</span>
+    </div>
   );
 }
