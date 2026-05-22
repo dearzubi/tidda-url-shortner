@@ -1,6 +1,6 @@
 import { CreateLinkRequestSchema, type CreateLinkResponse, parseSchema } from '@tidda/shared';
 import { Check, Copy, Link2, Loader2 } from 'lucide-react';
-import { type FormEvent, type JSX, useId, useState } from 'react';
+import { type JSX, type SubmitEvent, useId, useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert.js';
 import { Button } from '@/components/ui/button.js';
 import { Input } from '@/components/ui/input.js';
@@ -24,7 +24,7 @@ export function LinkCreator({ onCreated }: LinkCreatorProps): JSX.Element {
   const [copyState, setCopyState] = useState<CopyState>('idle');
   const mutation = useCreateLink();
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     setCopyState('idle');
     setFormError(null);
