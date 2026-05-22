@@ -40,10 +40,13 @@ export function RecentLinks({ links, onClear, origin }: RecentLinksProps): JSX.E
 
           return (
             <li
-              className="rounded-md border border-border bg-card px-4 py-3 shadow-sm"
+              className="min-w-0 rounded-md border border-border bg-card px-4 py-3 shadow-sm"
               key={`${link.slug}-${link.createdAt}`}
             >
-              <a className="font-semibold text-foreground hover:underline" href={link.shortPath}>
+              <a
+                className="block truncate font-semibold text-foreground hover:underline"
+                href={link.shortPath}
+              >
                 {shortUrl}
               </a>
               <p
