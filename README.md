@@ -56,12 +56,14 @@ through pnpm.
 
 ```bash
 pnpm compose up -d postgres redis
+pnpm db:migrate
 pnpm dev
 ```
 
 ### 6. Run fully through Docker Compose
 
 Use this when you want the app and supporting services to run in containers.
+The Compose stack runs the one-shot `migrate` service before the backend starts.
 
 ```bash
 pnpm compose up -d --build
