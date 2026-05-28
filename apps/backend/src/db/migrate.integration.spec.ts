@@ -6,7 +6,21 @@ import { Kysely, PostgresDialect, sql } from 'kysely';
 import { FileMigrationProvider, Migrator } from 'kysely/migration';
 import { Pool } from 'pg';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { runMigrations } from './migrate.js';
+import { createMigrationPoolConfig, runMigrations } from './migrate.js';
+
+describe('createMigrationPoolConfig', () => {
+  it('enables certificate-verified SSL when requested', () => {
+    const config = createMigrationPoolConfig({
+      DATABASE_URL: 'postgres://u:p@localhost:5432/db',
+      DATABASE_SSL: true,
+    });
+
+    expect(config).toEqual({
+      connectionString: 'postgres://u:p@localhost:5432/db',
+      ssl: { rejectUnauthorized: true },
+    });
+  });
+});
 
 describe('migrate (integration)', () => {
   let container: StartedPostgreSqlContainer;

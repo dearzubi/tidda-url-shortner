@@ -26,6 +26,8 @@ export class AppModule {
         }),
         DatabaseModule.forRoot({
           databaseUrl: env.DATABASE_URL,
+          ssl: env.DATABASE_SSL,
+          sslCaFile: env.DATABASE_SSL_CA_FILE,
           maxConnections: env.DB_POOL_MAX,
           connectionTimeoutMs: env.DB_POOL_CONNECTION_TIMEOUT_MS,
           idleTimeoutMs: env.DB_POOL_IDLE_TIMEOUT_MS,

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { Inject, Injectable, type OnApplicationShutdown } from '@nestjs/common';
 import { Kysely, PostgresDialect, sql, type Transaction } from 'kysely';
 import { Pool, type PoolConfig } from 'pg';
@@ -8,14 +9,31 @@ export const READINESS_STATEMENT_TIMEOUT_MS = 450;
 
 export type DatabaseOptions = {
   databaseUrl: string;
+  ssl: boolean;
+  sslCaFile?: string | undefined;
   maxConnections: number;
   connectionTimeoutMs: number;
   idleTimeoutMs: number;
 };
 
+export function createPostgresSslConfig(options: {
+  enabled: boolean;
+  caFile?: string | undefined;
+}): PoolConfig['ssl'] {
+  if (!options.enabled) {
+    return undefined;
+  }
+
+  return {
+    rejectUnauthorized: true,
+    ...(options.caFile ? { ca: readFileSync(options.caFile, 'utf8') } : {}),
+  };
+}
+
 export function createPostgresPoolConfig(options: DatabaseOptions): PoolConfig {
   return {
     connectionString: options.databaseUrl,
+    ssl: createPostgresSslConfig({ enabled: options.ssl, caFile: options.sslCaFile }),
     max: options.maxConnections,
     connectionTimeoutMillis: options.connectionTimeoutMs,
     idleTimeoutMillis: options.idleTimeoutMs,
