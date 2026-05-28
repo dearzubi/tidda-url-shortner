@@ -160,6 +160,9 @@ ask the user where it belongs. Never propose committing files from
   `Database` token. Never import Kysely directly in services.
 - Migrations in `src/db/migrations`. Run via `pnpm db:migrate`.
 - Regenerate `src/db/types.ts` via `pnpm db:codegen` after migrations.
+- Production migrations for normal updates must be backward-compatible
+  with the currently deployed backend. Use expand, deploy, contract for
+  breaking schema changes.
 - Env parsed once in `src/config/env.ts` (zod).
 
 ### `apps/web` (Vite + React)
@@ -207,6 +210,10 @@ ask the user where it belongs. Never propose committing files from
 - **Prefer real implementations / fakes over mocks** when feasible.
   Integration tests for `apps/backend` run against real Postgres + Redis
   (Testcontainers or docker-compose test profile).
+- **Sandbox note:** backend integration specs that use Testcontainers need
+  access to the local container runtime. If they fail inside the sandbox with
+  "Could not find a working container runtime strategy", rerun the same `pnpm`
+  command with escalated/out-of-sandbox permissions.
 - **NestJS testing uses `Test.createTestingModule`** with real
   providers wherever possible; override only the bits that need it.
 
