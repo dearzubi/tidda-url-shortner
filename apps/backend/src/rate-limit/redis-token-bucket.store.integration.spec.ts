@@ -12,7 +12,10 @@ import {
 } from './redis-token-bucket.store';
 import { RedisTokenBucketScriptLoader } from './redis-token-bucket-script.loader';
 
-type TestRedisClient = ReturnType<typeof createClient>;
+type ConnectableRedisTokenBucketClient = RedisTokenBucketClient & {
+  readonly isOpen: boolean;
+  connect(): Promise<unknown>;
+};
 
 const POLICY_NAME = 'test.redis';
 
@@ -33,29 +36,29 @@ function createTestPolicy(): TokenBucketPolicy {
   };
 }
 
-function createClientProvider(client: TestRedisClient): RedisClientProvider {
-  let connectPromise: Promise<RedisTokenBucketClient> | undefined;
+function createClientProvider(client: ConnectableRedisTokenBucketClient): RedisClientProvider {
+  let connectPromise: Promise<void> | undefined;
 
   return {
     async getOpenClient() {
-      if (client.isOpen) {
-        return client;
+      if (!client.isOpen) {
+        connectPromise ??= client
+          .connect()
+          .then(() => undefined)
+          .finally(() => {
+            connectPromise = undefined;
+          });
+        await connectPromise;
       }
 
-      connectPromise ??= client
-        .connect()
-        .then(() => client)
-        .finally(() => {
-          connectPromise = undefined;
-        });
-      return connectPromise;
+      return client;
     },
   };
 }
 
 describe('RedisTokenBucketStore', () => {
   let container: StartedRedisContainer;
-  let client: TestRedisClient;
+  let client: ReturnType<typeof createClient>;
   let store: RedisTokenBucketStore;
   let loader: RedisTokenBucketScriptLoader;
 
