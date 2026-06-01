@@ -35,8 +35,12 @@ jobs:
         run: pnpm --filter @tidda/web exec playwright install --with-deps chromium
       - run: pnpm test
       - run: pnpm build
-      - run: docker build -f infra/docker/backend.Dockerfile .
-      - run: docker build -f infra/docker/web.Dockerfile .
+      - name: Build backend Docker image
+        run: docker build -f infra/docker/backend.Dockerfile .
+      - name: Build backend AWS runtime Docker image
+        run: docker build -f infra/docker/backend.Dockerfile --target aws-runtime .
+      - name: Build web Docker image
+        run: docker build -f infra/docker/web.Dockerfile .
 
   pr-title:
     if: github.event_name == 'pull_request'
@@ -54,4 +58,6 @@ jobs:
           cache: true
       - run: pnpm install --frozen-lockfile
       - name: Lint PR title (conventional commits)
-        run: echo "${{ github.event.pull_request.title }}" | pnpm exec commitlint
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: printf '%s\n' "$PR_TITLE" | pnpm exec commitlint
