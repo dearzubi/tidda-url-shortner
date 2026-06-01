@@ -28,3 +28,11 @@ coverage
 *.log
 npm-debug.log*
 pnpm-debug.log*
+
+# Terraform local state and provider caches are never needed in app images.
+**/.terraform
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+!*.tfvars.example

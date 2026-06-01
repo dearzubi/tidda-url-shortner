@@ -73,6 +73,7 @@ describe('links HTTP flow (integration)', () => {
         }),
         DatabaseModule.forRoot({
           databaseUrl: container.getConnectionUri(),
+          ssl: false,
           maxConnections: 10,
           connectionTimeoutMs: 5000,
           idleTimeoutMs: 30000,
@@ -173,6 +174,7 @@ describe('links HTTP flow (integration)', () => {
         }),
         DatabaseModule.forRoot({
           databaseUrl: container.getConnectionUri(),
+          ssl: false,
           maxConnections: 10,
           connectionTimeoutMs: 5000,
           idleTimeoutMs: 30000,

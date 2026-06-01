@@ -13,6 +13,7 @@ describe('createPostgresPoolConfig', () => {
   it('maps explicit database options into pg pool config', () => {
     const config = createPostgresPoolConfig({
       databaseUrl: 'postgres://u:p@localhost:5432/db',
+      ssl: false,
       maxConnections: 20,
       connectionTimeoutMs: 2500,
       idleTimeoutMs: 15000,
@@ -24,6 +25,18 @@ describe('createPostgresPoolConfig', () => {
       connectionTimeoutMillis: 2500,
       idleTimeoutMillis: 15000,
     });
+  });
+
+  it('enables certificate-verified SSL when requested', () => {
+    const config = createPostgresPoolConfig({
+      databaseUrl: 'postgres://u:p@localhost:5432/db',
+      ssl: true,
+      maxConnections: 20,
+      connectionTimeoutMs: 2500,
+      idleTimeoutMs: 15000,
+    });
+
+    expect(config.ssl).toEqual({ rejectUnauthorized: true });
   });
 });
 
@@ -44,6 +57,7 @@ describe('DatabaseService (integration)', () => {
       imports: [
         DatabaseModule.forRoot({
           databaseUrl: container.getConnectionUri(),
+          ssl: false,
           maxConnections: 10,
           connectionTimeoutMs: 5000,
           idleTimeoutMs: 30000,

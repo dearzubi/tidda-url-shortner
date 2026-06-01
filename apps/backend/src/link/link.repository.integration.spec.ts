@@ -51,6 +51,7 @@ describe('LinkRepository (integration)', () => {
       imports: [
         DatabaseModule.forRoot({
           databaseUrl: container.getConnectionUri(),
+          ssl: false,
           maxConnections: 10,
           connectionTimeoutMs: 5000,
           idleTimeoutMs: 30000,

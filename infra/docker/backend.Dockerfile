@@ -41,3 +41,12 @@ COPY --from=build --chown=node:node /deploy /app
 USER node
 EXPOSE 3000
 CMD ["node", "--require", "./dist/instrumentation.js", "dist/main.js"]
+
+FROM runtime AS aws-runtime
+USER root
+ENV DATABASE_SSL_CA_FILE=/opt/aws-rds/global-bundle.pem
+RUN mkdir -p /opt/aws-rds
+ADD --chmod=0444 https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /opt/aws-rds/global-bundle.pem
+USER node
+
+FROM runtime AS default

@@ -4,8 +4,9 @@ import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import { Kysely, PostgresDialect } from 'kysely';
 import { FileMigrationProvider, type Migrator, Migrator as MigratorImpl } from 'kysely/migration';
-import { Pool } from 'pg';
-import { loadEnv } from '../config/env';
+import { Pool, type PoolConfig } from 'pg';
+import { type Env, loadEnv } from '../config/env';
+import { createPostgresSslConfig } from './database.service';
 import type { DB } from './types';
 
 export type Direction = 'up' | 'down';
@@ -19,6 +20,18 @@ export type MigratorLike = Pick<Migrator, 'migrateToLatest' | 'migrateDown'>;
 
 export function parseDirection(argv: ReadonlyArray<string>): Direction {
   return argv[2] === 'down' ? 'down' : 'up';
+}
+
+export function createMigrationPoolConfig(
+  env: Pick<Env, 'DATABASE_URL' | 'DATABASE_SSL' | 'DATABASE_SSL_CA_FILE'>,
+): PoolConfig {
+  return {
+    connectionString: env.DATABASE_URL,
+    ssl: createPostgresSslConfig({
+      enabled: env.DATABASE_SSL,
+      caFile: env.DATABASE_SSL_CA_FILE,
+    }),
+  };
 }
 
 export async function runMigrations(opts: {
@@ -46,7 +59,7 @@ export async function runMigrations(opts: {
 async function main(): Promise<void> {
   const env = loadEnv();
   const db = new Kysely<DB>({
-    dialect: new PostgresDialect({ pool: new Pool({ connectionString: env.DATABASE_URL }) }),
+    dialect: new PostgresDialect({ pool: new Pool(createMigrationPoolConfig(env)) }),
   });
   const migrator = new MigratorImpl({
     db,

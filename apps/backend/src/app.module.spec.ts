@@ -13,6 +13,8 @@ const env: Env = {
   BACKEND_TRUSTED_PROXIES: false,
   DATABASE_URL: 'postgres://u:p@localhost:5432/db',
   REDIS_URL: 'redis://localhost:6379',
+  DATABASE_SCHEMA: 'public',
+  DATABASE_SSL: false,
   DB_POOL_MAX: 10,
   DB_POOL_CONNECTION_TIMEOUT_MS: 5000,
   DB_POOL_IDLE_TIMEOUT_MS: 30000,

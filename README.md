@@ -73,3 +73,8 @@ pnpm compose up -d --build
 
 See [VPS production deployment](docs/runbooks/vps-production-deployment.md)
 for the single-server production guide.
+
+## AWS production
+
+See [AWS Control Setup Runbook](docs/runbooks/aws-control-setup.md) for AWS
+deployment setup through GitHub Actions and Terraform.
