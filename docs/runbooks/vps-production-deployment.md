@@ -23,7 +23,11 @@ The production override keeps only Caddy public:
 ```text
 Internet
   to Caddy on ports 80 and 443
-    to backend on Docker's private network
+    to backend on Docker's internal proxy network
+
+Internal proxy network:
+  web
+  backend
 
 Private Docker network:
   backend
@@ -36,9 +40,10 @@ Private Docker network:
   tempo
 ```
 
-The `web` service joins both the public and private Docker networks. Every
-other service joins only the private network. The private network is marked
-`internal: true`, so it is not directly reachable from outside Docker.
+The `web` service joins the public and `proxy_to_backend` Docker networks. The
+`backend` service joins `proxy_to_backend` and `private`. The remaining services
+join only the private network. The internal networks are marked
+`internal: true`, so they are not directly reachable from outside Docker.
 Container logs are shipped to Loki by the Docker Loki logging driver. This keeps
 log collection out of the application containers and avoids mounting the Docker
 socket into an observability container.
@@ -166,6 +171,7 @@ POSTGRES_PORT=5432
 REDIS_PORT=6379
 
 BACKEND_PORT=3000
+BACKEND_TRUSTED_PROXIES=172.30.10.0/29
 BACKEND_DB_POOL_MAX=10
 BACKEND_DB_POOL_CONNECTION_TIMEOUT_MS=5000
 BACKEND_DB_POOL_IDLE_TIMEOUT_MS=30000
@@ -215,9 +221,10 @@ The resolved config should show:
   have no public host ports.
 - `tempo-init` uses `network_mode: none` and only prepares Tempo volume
   ownership.
-- `web` is attached to `public` and `private`.
-- every other service is attached only to `private`.
-- `private` has `internal: true`.
+- `web` is attached to `public` and `proxy_to_backend`.
+- `backend` is attached to `proxy_to_backend` and `private`.
+- every other service is attached only to `private`, except `tempo-init`.
+- `proxy_to_backend` and `private` have `internal: true`.
 
 ## Start Production
 
