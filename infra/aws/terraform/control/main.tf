@@ -101,6 +101,7 @@ data "aws_iam_policy_document" "deploy_storage" {
       "s3:DeleteBucketPolicy",
       "s3:DeleteObject",
       "s3:DeleteObjectVersion",
+      "s3:GetBucket*",
       "s3:GetBucketAcl",
       "s3:GetBucketLocation",
       "s3:GetBucketOwnershipControls",
@@ -159,6 +160,7 @@ data "aws_iam_policy_document" "deploy_storage" {
     actions = [
       "secretsmanager:DescribeSecret",
       "secretsmanager:GetSecretValue",
+      "secretsmanager:GetResourcePolicy",
       "secretsmanager:ListSecretVersionIds",
     ]
     resources = [local.app_secret_arn]
@@ -439,6 +441,48 @@ data "aws_iam_policy_document" "deploy_iam" {
   }
 }
 
+data "aws_iam_policy_document" "deploy_kms" {
+  statement {
+    sid = "UseServiceManagedKmsKeysForRdsAndSecrets"
+    actions = [
+      "kms:Decrypt",
+      "kms:DescribeKey",
+      "kms:GenerateDataKey",
+    ]
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values = [
+        "rds.${var.aws_region}.amazonaws.com",
+        "secretsmanager.${var.aws_region}.amazonaws.com",
+      ]
+    }
+  }
+
+  statement {
+    sid       = "CreateServiceKmsGrantsForRdsAndSecrets"
+    actions   = ["kms:CreateGrant"]
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values = [
+        "rds.${var.aws_region}.amazonaws.com",
+        "secretsmanager.${var.aws_region}.amazonaws.com",
+      ]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "kms:GrantIsForAWSResource"
+      values   = ["true"]
+    }
+  }
+}
+
 data "aws_iam_policy_document" "destroy" {
   statement {
     sid = "AccessSharedStateBucketForDestroy"
@@ -462,6 +506,7 @@ data "aws_iam_policy_document" "destroy" {
       "s3:DeleteBucketPolicy",
       "s3:DeleteObject",
       "s3:DeleteObjectVersion",
+      "s3:GetBucket*",
       "s3:GetBucketLocation",
       "s3:GetBucketOwnershipControls",
       "s3:GetBucketPolicy",
@@ -504,6 +549,7 @@ data "aws_iam_policy_document" "destroy" {
     actions = [
       "secretsmanager:DescribeSecret",
       "secretsmanager:GetSecretValue",
+      "secretsmanager:GetResourcePolicy",
       "secretsmanager:ListSecretVersionIds",
     ]
     resources = [local.app_secret_arn]
@@ -646,6 +692,42 @@ data "aws_iam_policy_document" "destroy" {
   }
 }
 
+data "aws_iam_policy_document" "destroy_kms" {
+  statement {
+    sid = "UseServiceManagedKmsKeysForRdsSnapshot"
+    actions = [
+      "kms:Decrypt",
+      "kms:DescribeKey",
+      "kms:GenerateDataKey",
+    ]
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["rds.${var.aws_region}.amazonaws.com"]
+    }
+  }
+
+  statement {
+    sid       = "CreateServiceKmsGrantsForRdsSnapshot"
+    actions   = ["kms:CreateGrant"]
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["rds.${var.aws_region}.amazonaws.com"]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "kms:GrantIsForAWSResource"
+      values   = ["true"]
+    }
+  }
+}
+
 resource "aws_iam_policy" "deploy" {
   name        = "${var.project}-github-deploy"
   description = "GitHub Actions deploy storage permissions for ${var.project}."
@@ -676,10 +758,22 @@ resource "aws_iam_policy" "deploy_iam" {
   policy      = data.aws_iam_policy_document.deploy_iam.json
 }
 
+resource "aws_iam_policy" "deploy_kms" {
+  name        = "${var.project}-github-deploy-kms"
+  description = "GitHub Actions deploy KMS permissions for ${var.project}."
+  policy      = data.aws_iam_policy_document.deploy_kms.json
+}
+
 resource "aws_iam_policy" "destroy" {
   name        = "${var.project}-github-destroy"
   description = "GitHub Actions destroy permissions for ${var.project}."
   policy      = data.aws_iam_policy_document.destroy.json
+}
+
+resource "aws_iam_policy" "destroy_kms" {
+  name        = "${var.project}-github-destroy-kms"
+  description = "GitHub Actions destroy KMS permissions for ${var.project}."
+  policy      = data.aws_iam_policy_document.destroy_kms.json
 }
 
 resource "aws_iam_role_policy_attachment" "deploy" {
@@ -707,7 +801,17 @@ resource "aws_iam_role_policy_attachment" "deploy_iam" {
   policy_arn = aws_iam_policy.deploy_iam.arn
 }
 
+resource "aws_iam_role_policy_attachment" "deploy_kms" {
+  role       = aws_iam_role.deploy.name
+  policy_arn = aws_iam_policy.deploy_kms.arn
+}
+
 resource "aws_iam_role_policy_attachment" "destroy" {
   role       = aws_iam_role.destroy.name
   policy_arn = aws_iam_policy.destroy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "destroy_kms" {
+  role       = aws_iam_role.destroy.name
+  policy_arn = aws_iam_policy.destroy_kms.arn
 }
