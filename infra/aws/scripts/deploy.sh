@@ -162,6 +162,33 @@ state_exists() {
   return 2
 }
 
+list_tainted_resources() {
+  terraform -chdir="$APP_DIR" state pull | jq -r '
+    .resources[]? as $resource
+    | select($resource.mode == "managed")
+    | ($resource.type + "." + $resource.name) as $address
+    | $resource.instances[]?
+    | select(.status == "tainted")
+    | if has("index_key") then
+        $address + "[" + (.index_key | tojson) + "]"
+      else
+        $address
+      end
+  '
+}
+
+state_resource_id() {
+  local address="$1"
+  terraform -chdir="$APP_DIR" state pull | jq -er --arg address "$address" '
+    [
+      .resources[]?
+      | select(.mode == "managed" and ((.type + "." + .name) == $address))
+      | .instances[]?
+      | .attributes.id
+    ][0] // empty
+  '
+}
+
 bucket_exists() {
   local bucket="$1"
   local error_file
@@ -182,6 +209,32 @@ bucket_exists() {
   return 2
 }
 
+secret_exists() {
+  local secret_id="$1"
+  local error_file secret_json
+  error_file="$(mktemp)"
+
+  if secret_json="$(aws secretsmanager describe-secret \
+    --secret-id "$secret_id" \
+    --region "$AWS_REGION" \
+    --output json 2>"$error_file")"; then
+    rm -f "$error_file"
+    if printf '%s' "$secret_json" | jq -e '.DeletedDate? != null' > /dev/null; then
+      return 1
+    fi
+    return 0
+  fi
+
+  if grep -Eiq 'ResourceNotFoundException|not found|marked for deletion' "$error_file"; then
+    rm -f "$error_file"
+    return 1
+  fi
+
+  cat "$error_file" >&2
+  rm -f "$error_file"
+  return 2
+}
+
 ensure_state_bucket_exists() {
   local bucket_status=0
   bucket_exists "$STATE_BUCKET_NAME" || bucket_status=$?
@@ -193,6 +246,64 @@ ensure_state_bucket_exists() {
   else
     fail "Unable to determine whether shared state bucket exists"
   fi
+}
+
+recover_tainted_frontend_bucket() {
+  local address="$1"
+  local bucket_name
+  bucket_name="$(state_resource_id "$address")" || fail "Unable to read state id for tainted resource $address"
+
+  local bucket_status=0
+  bucket_exists "$bucket_name" || bucket_status=$?
+  if [[ "$bucket_status" -eq 1 ]]; then
+    fail "Cannot recover tainted resource $address because S3 bucket $bucket_name is missing"
+  elif [[ "$bucket_status" -ne 0 ]]; then
+    fail "Unable to determine whether S3 bucket $bucket_name exists before recovering tainted resource $address"
+  fi
+
+  log "Recovering tainted Terraform resource $address after confirming S3 bucket $bucket_name exists"
+  terraform -chdir="$APP_DIR" untaint "$address"
+}
+
+recover_tainted_app_secret() {
+  local address="$1"
+  local secret_id
+  secret_id="$(state_resource_id "$address")" || fail "Unable to read state id for tainted resource $address"
+
+  local secret_status=0
+  secret_exists "$secret_id" || secret_status=$?
+  if [[ "$secret_status" -eq 1 ]]; then
+    fail "Cannot recover tainted resource $address because Secrets Manager secret $secret_id is missing or pending deletion"
+  elif [[ "$secret_status" -ne 0 ]]; then
+    fail "Unable to determine whether Secrets Manager secret $secret_id exists before recovering tainted resource $address"
+  fi
+
+  log "Recovering tainted Terraform resource $address after confirming Secrets Manager secret exists"
+  terraform -chdir="$APP_DIR" untaint "$address"
+}
+
+recover_first_deployment_taints() {
+  local tainted_output
+  tainted_output="$(list_tainted_resources)" || fail "Unable to read tainted Terraform resources from state"
+  if [[ -z "$tainted_output" ]]; then
+    return
+  fi
+
+  local address
+  while IFS= read -r address; do
+    [[ -z "$address" ]] && continue
+    case "$address" in
+      aws_s3_bucket.frontend)
+        recover_tainted_frontend_bucket "$address"
+        ;;
+      aws_secretsmanager_secret.app)
+        recover_tainted_app_secret "$address"
+        ;;
+      *)
+        fail "Terraform state contains tainted resource $address. Resolve it manually before deployment."
+        ;;
+    esac
+  done < <(printf '%s\n' "$tainted_output")
 }
 
 read_app_outputs() {
@@ -645,6 +756,7 @@ main() {
   app_outputs_exist || app_outputs_status=$?
   if [[ "$app_outputs_status" -eq 1 ]]; then
     log "Decision deployment_mode mode=first reason=app_outputs_missing"
+    recover_first_deployment_taints
     run_first_deployment
     return
   elif [[ "$app_outputs_status" -ne 0 ]]; then
@@ -658,6 +770,7 @@ main() {
   if [[ "$DEPLOYMENT_MODE" == "repeat" ]]; then
     run_repeat_deployment
   else
+    recover_first_deployment_taints
     run_first_deployment
   fi
 }
