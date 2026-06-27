@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
-FROM node:24.15.0-alpine@sha256:d1b3b4da11eefd5941e7f0b9cf17783fc99d9c6fc34884a665f40a06dbdfc94f AS base
+FROM node:26.4.0-alpine@sha256:725aeba2364a9b16beae49e180d83bd597dbd0b15c47f1f28875c290bfd255b9 AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 # CI=true skips pnpm 11's interactive deps-purge prompt during nested
@@ -34,7 +34,7 @@ RUN pnpm --filter @tidda/backend build
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm --filter @tidda/backend deploy --prod /deploy
 
-FROM node:24.15.0-alpine@sha256:d1b3b4da11eefd5941e7f0b9cf17783fc99d9c6fc34884a665f40a06dbdfc94f AS runtime
+FROM node:26.4.0-alpine@sha256:725aeba2364a9b16beae49e180d83bd597dbd0b15c47f1f28875c290bfd255b9 AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build --chown=node:node /deploy /app
